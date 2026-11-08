@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AU Interaktif - Chat Story</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #efeae2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .phone-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 800px;
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        @media (min-width: 401px) {
+            .phone-container {
+                border-radius: 30px;
+                height: 85vh;
+                border: 10px solid #222;
+            }
+        }
+        /* Lockscreen Style */
+        #lockscreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #005c4b, #128c7e);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
+        }
+        #lockscreen h2 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        #lockscreen p {
+            margin-bottom: 20px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .pin-dots {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .dot {
+            width: 15px;
+            height: 15px;
+            border: 2px solid white;
+            border-radius: 50%;
+            background: transparent;
+            transition: 0.2s;
+        }
+        .dot.active {
+            background: white;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 70px);
+            gap: 15px;
+        }
+        .key {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .key:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        .error-msg {
+            color: #ffcccc;
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 18px;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            background-color: #005c4b;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .chat-header .info h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .chat-header .info p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        /* Chat Body */
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #efeae2;
+        }
+        .bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bubble.incoming {
+            background-color: white;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        .bubble.outgoing {
+            background-color: #d9fdd3;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        .time {
+            font-size: 10px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
+        /* Chat Footer & Choices */
+        .chat-footer {
+            padding: 15px;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-top: 1px solid #ddd;
+        }
+        .choice-btn {
+            background-color: white;
+            border: 1px solid #005c4b;
+            color: #005c4b;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            background-color: #005c4b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <!-- LOCKSCREEN -->
+        <div id="lockscreen">
+            <h2>🔒 Masukkan PIN</h2>
+            <p>Masukkan PIN untuk membuka HP (Clue: 1012)</p>
+            <div class="pin-dots">
+                <div class="dot" id="dot-0"></div>
+                <div class="dot" id="dot-1"></div>
+                <div class="dot" id="dot-2"></div>
+                <div class="dot" id="dot-3"></div>
+            </div>
+            <div class="keypad">
+                <button class="key" onclick="pressKey('1')">1</button>
+                <button class="key" onclick="pressKey('2')">2</button>
+                <button class="key" onclick="pressKey('3')">3</button>
+                <button class="key" onclick="pressKey('4')">4</button>
+                <button class="key" onclick="pressKey('5')">5</button>
+                <button class="key" onclick="pressKey('6')">6</button>
+                <button class="key" onclick="pressKey('7')">7</button>
+                <button class="key" onclick="pressKey('8')">8</button>
+                <button class="key" onclick="pressKey('9')">9</button>
+                <button class="key" style="visibility: hidden;"></button>
+                <button class="key" onclick="pressKey('0')">0</button>
+                <button class="key" onclick="clearPin()">⌫</button>
+            </div>
+            <div class="error-msg" id="error-msg"></div>
+        </div>
+
+        <!-- CHAT SECTION -->
+        <div class="chat-header">
+            <img src="https://i.pinimg.com/736x/83/bc/8b/83bc8b88cf6bc4b4e04d159a4732107e.jpg" alt="Kimmy">
+            <div class="info">
+                <h2 id="chat-title">Kimmy 🧸</h2>
+                <p id="chat-status">online</p>
+            </div>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            <!-- Pesan dimuat lewat JS -->
+        </div>
+
+        <div class="chat-footer" id="chat-footer">
+            <!-- Pilihan interaktif dimuat lewat JS -->
+        </div>
+    </div>
+
+    <script>
+        const correctPin = "1012";
+        let enteredPin = "";
+
+        function pressKey(num) {
+            if (enteredPin.length < 4) {
+                enteredPin += num;
+                updateDots();
+                if (enteredPin.length === 4) {
+                    checkPin();
+                }
+            }
+        }
+
+        function clearPin() {
+            enteredPin = "";
+            updateDots();
+            document.getElementById('error-msg').innerText = "";
+        }
+
+        function updateDots() {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (i < enteredPin.length) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            }
+        }
+
+        function checkPin() {
+            if (enteredPin === correctPin) {
+                // Hilangkan lockscreen dengan animasi halus
+                const lockscreen = document.getElementById('lockscreen');
+                lockscreen.style.transition = "opacity 0.5s ease";
+                lockscreen.style.opacity = "0";
+                setTimeout(() => {
+                    lockscreen.style.display = "none";
+                    loadScene('start'); // Mulai cerita chat
+                }, 500);
+            } else {
+                document.getElementById('error-msg').innerText = "PIN Salah! Coba lagi (1012)";
+                setTimeout(() => {
+                    clearPin();
+                }, 1000);
+            }
+        }
+
+        // Alur Cerita Chat
+        const chatBody = document.getElementById('chat-body');
+        const chatFooter = document.getElementById('chat-footer');
+
+        const story = {
+            start: {
+                messages: [
+                    { sender: 'incoming', text: "Hai! Kamu lagi sibuk gak? Tadi aku nemu jajanan kesukaan kamu waktu SD dulu, jadi pengen kasih ke kamu deh. Besok jadi kan pulang sekolah bareng?", time: "20.00" }
+                ],
+                choices: [
+                    { text: "Balas Kimmy: 'Wah serius? Mau banget! Besok jadi kok.'", next: 'pilih_kimmy' },
+                    { text: "Abaikan sebentar, balas chat dari Erine dulu.", next: 'pilih_erine' }
+                ]
+            },
+            pilih_kimmy: {
+                messages: [
+                    { sender: 'outgoing', text: "Wah serius? Mau banget! Besok jadi kok.", time: "20.01" },
+                    { sender: 'incoming', text: "Yey! Oke deh, aku tunggu ya besok di gerbang sekolah! 😊❤️", time: "20.02" }
+                ],
+                choices: [
+                    { text: "Lanjut buka chat dari Erine...", next: 'pilih_erine' }
+                ]
+            },
+            pilih_erine: {
+                messages: [
+                    { sender: 'incoming', text: "P. Besok kelar jam pelajaran tambahan, tungguin aku di parkiran belakang. Jangan ke mana-mana.", time: "20.05" },
+                    { sender: 'outgoing', text: "Duh Rin, besok kayaknya aku udah ada janji sama Kimmy...", time: "20.06" },
+                    { sender: 'incoming', text: "Oh, jadi lu lebih milih dia daripada gue? Yaudah terserah.", time: "20.07" }
+                ],
+                choices: [
+                    { text: "🔄 Ulang dari awal cerita", next: 'start' }
+                ]
+            }
+        };
+
+        function loadScene(sceneKey) {
+            const scene = story[sceneKey];
+            
+            scene.messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('bubble', msg.sender);
+                    bubble.innerHTML = `${msg.text}<div class="time">${msg.time}</div>`;
+                    chatBody.appendChild(bubble);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, index * 600);
+            });
+
+            chatFooter.innerHTML = '';
+            setTimeout(() => {
+                scene.choices.forEach(choice => {
+                    const btn = document.createElement('button');
+                    btn.classList.add('choice-btn');
+                    btn.innerText = choice.text;
+                    btn.onclick = () => loadScene(choice.next);
+                    chatFooter.appendChild(btn);
+                });
+            }, scene.messages.length * 600);
+        }
+    </script>
+</body>
+</html>
