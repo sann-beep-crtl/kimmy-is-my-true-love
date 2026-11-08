@@ -281,13 +281,12 @@
 
         function checkPin() {
             if (enteredPin === correctPin) {
-                // Hilangkan lockscreen dengan animasi halus
                 const lockscreen = document.getElementById('lockscreen');
                 lockscreen.style.transition = "opacity 0.5s ease";
                 lockscreen.style.opacity = "0";
                 setTimeout(() => {
                     lockscreen.style.display = "none";
-                    loadScene('start'); // Mulai cerita chat
+                    loadScene('start');
                 }, 500);
             } else {
                 document.getElementById('error-msg').innerText = "PIN Salah! Coba lagi (1012)";
@@ -297,7 +296,6 @@
             }
         }
 
-        // Alur Cerita Chat
         const chatBody = document.getElementById('chat-body');
         const chatFooter = document.getElementById('chat-footer');
 
